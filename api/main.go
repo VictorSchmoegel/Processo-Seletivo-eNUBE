@@ -1,5 +1,12 @@
 package main
 
+import (
+	"fmt"
+	"processo-seletivo/api/routes"
+)
+
 func main() {
-	// Start the server
+
+	fmt.Println("Iniciando API...")
+	routes.HandleRequest()
 }
