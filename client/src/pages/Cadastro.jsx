@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 import Logo from '../assets/logo.png'
 
-export default function Login() {
+export default function Cadastro() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(false)
@@ -13,7 +13,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    const response = await fetch('/api/auth', {
+    const response = await fetch('/api/createuser', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -25,22 +25,19 @@ export default function Login() {
       setError(false)
       const data = await response.json()
       console.log(data)
-      navigate('/consulta')
+      navigate('/')
     } else {
-      setError(true)
-      console.log('Usuário não encontrado')
+      const data = await response.json()
+      setError(data.error)
+      console.log('Erro ao criar usuario', data.error)
     }
       
-  }
-
-  const handleRegisterClick = () => {
-    navigate('/cadastro')
   }
 
   return (
     <main className="bg-slate-100 min-h-screen">
       <div className="flex flex-col gap-4 max-w-lg mx-auto p-20">
-        <h1 className="text-sky-900 text-2xl font-bold mb-6 text-center flex flex-col"><img src={Logo} alt="" />Login</h1>
+        <h1 className="text-sky-900 text-2xl font-bold mb-6 text-center flex flex-col"><img src={Logo} alt="" />SignIn</h1>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           <input
             className='border p-3 rounded-lg'
@@ -62,16 +59,10 @@ export default function Login() {
             className='bg-sky-900 text-white p-3 rounded-lg'
             type='submit'
           >
-            Entrar
-          </button>
-        </form>
-        <button
-            className='bg-green-900 text-white p-3 rounded-lg'
-            onClick={handleRegisterClick}
-          >
             Cadastrar
           </button>
-        {error && <p className='text-red-500'>Usuário não encontrado</p>}
+        </form>
+        {error && <p className='text-red-500'>Não foi possível cadastrar o usuário</p>}
       </div>
     </main>
   )
