@@ -2,74 +2,84 @@ package controllers
 
 import (
 	"net/http"
-	"os"
 	"processo-seletivo/api/db"
 	"processo-seletivo/api/models"
-	"time"
+	"processo-seletivo/api/utils"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"golang.org/x/crypto/bcrypt"
 )
 
-var jwtKey = []byte(os.Getenv("SECRET_KEY"))
+func CreateUser(c *gin.Context) {
+	var user models.User
 
-type Credentials struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	collection := db.GetUsersCollection()
+
+	var existingUser models.User
+	err := collection.FindOne(c, bson.M{"username": user.UserName}).Decode(&existingUser)
+	if err != nil && err != mongo.ErrNoDocuments {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	if existingUser.UserName != "" {
+		c.JSON(400, gin.H{"error": "Username already exists"})
+		return
+	}
+
+	hashedPassword, err := utils.HashPassword(user.Password)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to hash password"})
+		return
+	}
+	user.Password = hashedPassword
+
+	result, err := collection.InsertOne(c, user)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User created successfully", "id": result.InsertedID})
 }
 
-type Claims struct {
-	Username string `json:"username"`
-	jwt.StandardClaims
-}
+func AuthUser(c *gin.Context) {
+	var credentials models.User
 
-func AuthenticateUser(c *gin.Context) {
-	var creds Credentials
-	if err := c.ShouldBindJSON(&creds); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+	if err := c.ShouldBindJSON(&credentials); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	collection := db.GetUsersCollection()
 	var user models.User
-	err := collection.FindOne(c, bson.M{"username": creds.Username}).Decode(&user)
-	if err == mongo.ErrNoDocuments {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
-		return
-	} else if err != nil {
+	err := collection.FindOne(c, bson.M{"username": credentials.UserName}).Decode(&user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(creds.Password))
-	if err != nil {
+	if !utils.CheckPasswordHash(credentials.Password, user.Password) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 		return
 	}
 
-	expirationTime := time.Now().Add(24 * time.Hour)
-	claims := &Claims{
-		Username: creds.Username,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expirationTime.Unix(),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtKey)
+	token, err := utils.GenerateJWT(user.UserName)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}
 
-	http.SetCookie(c.Writer, &http.Cookie{
-		Name:    "token",
-		Value:   tokenString,
-		Expires: expirationTime,
-	})
-
-	c.JSON(http.StatusOK, gin.H{"message": "Logged in successfully"})
+	c.SetCookie("token", token, 3600*24, "/", "localhost", false, true)
+	c.JSON(http.StatusOK, gin.H{"message": "Authenticated successfully", "token": token})
 }
