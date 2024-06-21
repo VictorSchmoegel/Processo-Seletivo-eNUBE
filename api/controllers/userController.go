@@ -19,14 +19,26 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
+	collection := db.GetUsersCollection()
+
+	var existingUser models.User
+	err := collection.FindOne(c, bson.M{"username": user.UserName}).Decode(&existingUser)
+	if err != nil && err != mongo.ErrNoDocuments {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	if existingUser.UserName != "" {
+		c.JSON(400, gin.H{"error": "Username already exists"})
+		return
+	}
+
 	hashedPassword, err := utils.HashPassword(user.Password)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Failed to hash password"})
 		return
 	}
 	user.Password = hashedPassword
-
-	collection := db.GetUsersCollection()
 
 	result, err := collection.InsertOne(c, user)
 	if err != nil {
