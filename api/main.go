@@ -1,12 +1,14 @@
 package main
 
 import (
-	"fmt"
+	"processo-seletivo/api/db"
 	"processo-seletivo/api/routes"
 )
 
 func main() {
-
-	fmt.Println("Iniciando API...")
-	routes.HandleRequest()
+	defer db.Disconnect()
+	r := routes.HandleRequests()
+	if err := r.Run(":3000"); err != nil {
+		panic(err)
+	}
 }
