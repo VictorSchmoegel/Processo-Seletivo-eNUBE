@@ -21,7 +21,7 @@ func HandleRequests() *gin.Engine {
 		})
 		auth.GET("/partners", controllers.GetPartners)
 		auth.GET("/customers", controllers.GetCustomers)
-		auth.GET("/invoice/:invoiceNumber", controllers.GetInvoice)
+		auth.GET("/products/:productId", controllers.GetProducts)
 		auth.GET("/customers/:country", controllers.GetCustomersByCountry)
 	}
 	return r
