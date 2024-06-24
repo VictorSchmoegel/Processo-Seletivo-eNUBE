@@ -19,6 +19,10 @@ func HandleRequests() *gin.Engine {
 			username := c.MustGet("username").(string)
 			c.JSON(http.StatusOK, gin.H{"message": "Hello " + username})
 		})
+		auth.GET("/partners", controllers.GetPartners)
+		auth.GET("/customers", controllers.GetCustomers)
+		auth.GET("/invoice/:invoiceNumber", controllers.GetInvoice)
+		auth.GET("/customers/:country", controllers.GetCustomersByCountry)
 	}
 	return r
 }
