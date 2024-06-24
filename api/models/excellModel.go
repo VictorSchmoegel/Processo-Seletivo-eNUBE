@@ -18,3 +18,11 @@ type Invoice struct {
 	UnitPrice     string `json:"unit_price"`
 	TotalPrice    string `json:"total_price"`
 }
+
+type Product struct {
+	ProductId   string `json:"product_id"`
+	ProductName string `json:"product_name"`
+	Quantity    string `json:"quantity"`
+	UnitPrice   string `json:"unit_price"`
+	TotalPrice  string `json:"total_price"`
+}

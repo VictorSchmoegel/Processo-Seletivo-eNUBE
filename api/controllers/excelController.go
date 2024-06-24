@@ -68,8 +68,8 @@ func GetCustomers(c *gin.Context) {
 	c.JSON(http.StatusOK, customers)
 }
 
-func GetInvoice(c *gin.Context) {
-	invoiceNumber := c.Param("invoiceNumber")
+func GetProducts(c *gin.Context) {
+	productIdOrName := c.Param("productId")
 	f, err := ReadExcel(c)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -84,20 +84,18 @@ func GetInvoice(c *gin.Context) {
 	}
 
 	for _, row := range rows[1:] {
-		if row[9] == invoiceNumber {
-			invoice := models.Invoice{
-				InvoiceNumber: row[9],
-				ProductId:     row[10],
-				ProductName:   row[11],
-				Quantity:      row[12],
-				UnitPrice:     row[13],
-				TotalPrice:    row[14],
+		if row[9] == productIdOrName || row[13] == productIdOrName {
+			product := models.Product{
+				ProductId:   row[8],
+				ProductName: row[13],
+				Quantity:    row[34],
+				UnitPrice:   row[33],
 			}
-			c.JSON(http.StatusOK, invoice)
+			c.JSON(http.StatusOK, product)
 			return
 		}
 	}
-	c.JSON(http.StatusNotFound, gin.H{"error": "Invoice not found"})
+	c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
 }
 
 func GetCustomersByCountry(c *gin.Context) {
