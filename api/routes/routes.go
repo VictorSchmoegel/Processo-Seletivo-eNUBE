@@ -16,13 +16,14 @@ func HandleRequests() *gin.Engine {
 	auth.Use(middlewares.AuthMiddleware())
 	{
 		auth.GET("/protected-route", func(c *gin.Context) {
-			username := c.MustGet("username").(string)
-			c.JSON(http.StatusOK, gin.H{"message": "Hello " + username})
+			userID := c.MustGet("user_id").(string)
+			c.JSON(http.StatusOK, gin.H{"message": "Hello " + userID})
 		})
 		auth.GET("/partners", controllers.GetPartners)
 		auth.GET("/customers", controllers.GetCustomers)
 		auth.GET("/products/:productId", controllers.GetProducts)
 		auth.GET("/customers/:country", controllers.GetCustomersByCountry)
+		auth.GET("/checkauth", controllers.CheckAuth)
 	}
 	return r
 }
