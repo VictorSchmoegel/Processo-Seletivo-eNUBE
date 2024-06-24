@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: Processo-Seletivo-eNUBE
+    env: go
+    runtime: go1.22.3
+    buildCommand: go build -tags netgo -ldflags '-s -w' -o main
+    startCommand: ./main
