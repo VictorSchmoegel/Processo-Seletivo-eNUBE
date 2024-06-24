@@ -7,145 +7,245 @@ export default function Consulta() {
   const [country, setCountry] = useState('')
   const [productId, setProductId] = useState('');
   const [countryCustomers, setCountryCustomers] = useState([]);
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState({
+    partners: false,
+    customers: false,
+    product: false,
+    countryCustomers: false
+  });
+  const [errors, setErrors] = useState({
+    partners: null,
+    customers: null,
+    product: null,
+    countryCustomers: null
+  });
 
-  const fetchPartners = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    const response = await fetch('/api/partners')
-    const data = await response.json()
-    const uniquePartners = Array.from(new Set(data.map(p => JSON.stringify(p)))).map(p => JSON.parse(p));
-    setPartners(uniquePartners)
-    setLoading(false)
-  }
-
-  const fetchCustomers = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    const response = await fetch('/api/customers')
-    const data = await response.json()
-    const uniqueCustomers = Array.from(new Set(data.map(p => JSON.stringify(p)))).map(p => JSON.parse(p));
-    setCustomers(uniqueCustomers)
-    setLoading(false)
-  }
-
-  const fetchProduct = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    const response = await fetch(`/api/products/${productId}`);
+  const fetchPartners = async () => {
+    setLoading(prev => ({ ...prev, partners: true }));
+    const response = await fetch('/api/partners');
     const data = await response.json();
-    console.log(data);
-    setProduct(data);
-    setLoading(false);
+    const uniquePartners = Array.from(new Set(data.map(p => JSON.stringify(p)))).map(p => JSON.parse(p));
+    setPartners(uniquePartners);
+    setLoading(prev => ({ ...prev, partners: false }));
   };
 
-  const fetchCountryCustomers = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const fetchCustomers = async () => {
+    setLoading(prev => ({ ...prev, customers: true }));
+    const response = await fetch('/api/customers');
+    const data = await response.json();
+    const uniqueCustomers = Array.from(new Set(data.map(p => JSON.stringify(p)))).map(p => JSON.parse(p));
+    setCustomers(uniqueCustomers);
+    setLoading(prev => ({ ...prev, customers: false }));
+  };
+
+  const fetchProduct = async () => {
+    setLoading(prev => ({ ...prev, product: true }));
+    setErrors(prev => ({ ...prev, product: null }));
+    const response = await fetch(`/api/products/${productId}`);
+    const data = await response.json();
+    if (response.status === 404) {
+      setErrors(prev => ({ ...prev, product: 'Produto não encontrado' }));
+      setProduct(null);
+    } else {
+      setProduct(data);
+    }
+    setLoading(prev => ({ ...prev, product: false }));
+  };
+
+  const fetchCountryCustomers = async () => {
+    setLoading(prev => ({ ...prev, countryCustomers: true }));
+    setErrors(prev => ({ ...prev, countryCustomers: null }));
     const response = await fetch(`/api/customers/${country}`);
     const data = await response.json();
-    setCountryCustomers(data);
-    setLoading(false);
+    const uniqueCustomers = Array.from(new Set(data.map(p => JSON.stringify(p)))).map(p => JSON.parse(p));
+    if (response.status === 404) {
+      setErrors(prev => ({ ...prev, countryCustomers: 'País não encontrado' }));
+      setCountryCustomers([]);
+    } else {
+      setCountryCustomers(uniqueCustomers);
+    }
+    setLoading(prev => ({ ...prev, countryCustomers: false }));
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Consulta</h1>
-      <form onSubmit={fetchPartners} className="mb-6">
-        <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-          Consultar Parceiros
-        </button>
-        {loading ? (
-          <p>Carregando...</p>
-        ) : (
+    <main className="bg-slate-100 flex mx-auto">
+    <div className="flex flex-col gap-4 max-w-lg mx-auto p-20">
+      <h1 className="text-2xl font-bold mb-4 text-center">Consulta</h1>
+      <form className="flex flex-col gap-4">
+
+        {/* consulta de parceiros */}
+        <section className="mb-6 border max-w-lg flex justify-between">
+          <h2 className="mt-auto mb-auto p-2 text-center">Consulte Parceiros</h2>
+          <button
+            onClick={fetchPartners}
+            className="bg-blue-500 text-white p-2 rounded"
+            disabled={loading.partners}
+          >
+            {loading.partners ? 'Carregando...' : 'Consultar Parceiros'}
+          </button>
+        </section>
+
+        {/* consulta de clientes */}
+        <section className="mb-6 border max-w-lg flex justify-between">
+          <h2 className="mt-auto mb-auto p-2">Consulte Clientes</h2>
+          <button
+            onClick={fetchCustomers}
+            className="bg-blue-500 text-white p-2 rounded"
+            disabled={loading.customers}
+          >
+            {loading.customers ? 'Carregando...' : 'Consultar Clientes'}
+          </button>
+        </section>
+
+        {/* consulta de produtos */}
+        <section className="mb-6 border max-w-lg flex justify-between">
+          <input
+            type="text"
+            placeholder="Nome ou ID do Produto"
+            value={productId}
+            onChange={(e) => setProductId(e.target.value)}
+            className="border p-2 rounded mr-2"
+          />
+          <button
+            onClick={fetchProduct}
+            className="bg-blue-500 text-white p-2 rounded min-w-28"
+            disabled={loading.product}
+          >
+            {loading.product ? 'Carregando...' : 'Consultar Produto'}
+          </button>
+        </section>
+
+        {/* consulta de clientes por país */}
+        <section className="mb-6 border max-w-lg flex justify-between">
+          <input
+            type="text"
+            placeholder="País"
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            className="border p-2 rounded mr-2"
+          />
+          <button
+            onClick={fetchCountryCustomers}
+            className="bg-blue-500 text-white p-2 rounded"
+            disabled={loading.countryCustomers}
+          >
+            {loading.countryCustomers ? 'Carregando...' : 'Consultar Clientes por País'}
+          </button>
+        </section>
+      </form>
+    </div>
+
+    <div className="flex flex-col gap-4 max-w-lg mx-auto p-20">
+      <section>
+        {loading.partners ? '' : (
           partners.length > 0 && (
             <ul className="mt-4">
               {partners.map((partner, index) => (
                 <li key={index}>
                   <div className="border font-semibold">
-                    <p>Parceiro ID: {partner.partner_id}</p>
+                    <h3 className="text-center p-3 uppercase underline">Consulta de Parceiros</h3>
                     <p>Nome do Parceiro: {partner.partner_name}</p>
+                    <p>Parceiro ID: {partner.partner_id}</p>
+                    <button
+                      className="bg-red-500 text-white p-2 rounded"
+                      onClick={() => setPartners([])}
+                    >
+                      Limpar
+                    </button>
                   </div>
                 </li>
               ))}
             </ul>
           )
         )}
-      </form>
-
-      <form onSubmit={fetchCustomers} className="mb-6">
-        <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-          Consultar Clientes
-        </button>
-        {loading ? (
-          <p>Carregando...</p>
-        ) : (
+      </section>
+      <section>
+        {loading.customers ? '' : (
           customers.length > 0 && (
-            <ul className="mt-4">
-              {customers.map((customer, index) => (
-                <li key={index}>
-                  <div className="border">
-                    <p className="underline font-semibold">Nome do Cliente: {customer.customer_name}</p>
-                    <p className="font-semibold">Cliente ID: {customer.customer_id}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )
-        )}
-      </form>
-
-      <form onSubmit={fetchProduct} className="mb-6">
-        <input
-          type="text"
-          placeholder="Nome do Produto"
-          value={productId}
-          onChange={(e) => setProductId(e.target.value)}
-          className="border p-2 rounded mr-2"
-        />
-        <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-          Consultar Produto
-        </button>
-        {loading ? (
-          <p>Carregando...</p>
-        ) : (
-          product && (
-            <div className="mt-4 border">
-              <p>Produto ID: {product.product_id}</p>
-              <p>Nome do Produto: {product.product_name}</p>
-              <p>Quantidade: {product.quantity}</p>
-              <p>Preço unitário: {product.unit_price}</p>
+            <div>
+              <h3 className="text-center p-3 uppercase underline">Consulta de Clientes</h3>
+              <table className="table-auto w-full border-collapse border border-gray-200">
+                <thead>
+                  <tr>
+                    <th className="border p-2">Nome do Cliente</th>
+                    <th className="border p-2">Cliente ID</th>
+                    <th className="border p-2">Domínio</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {customers.map((customer, index) => (
+                    <tr key={index}>
+                      <td className="border p-2">{customer.customer_name}</td>
+                      <td className="border p-2">{customer.customer_id}</td>
+                      <td className="border p-2">{customer.customer_domain}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <button
+                className="bg-red-500 text-white p-2 rounded mt-4"
+                onClick={() => setCustomers([])}
+              >
+                Limpar
+              </button>
             </div>
           )
         )}
-      </form>
-
-      <form onSubmit={fetchCountryCustomers} className="mb-6">
-        <input
-          type="text"
-          placeholder="País"
-          value={country}
-          onChange={(e) => setCountry(e.target.value)}
-          className="border p-2 rounded mr-2"
-        />
-        <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-          Consultar Clientes por País
-        </button>
-        {loading ? (
-          <p>Carregando...</p>
-        ) : (
-          countryCustomers.length > 0 && (
-            <ul className="mt-4">
-              {countryCustomers.map((customer, index) => (
-                <li key={index}>
-                  {customer.customer_id} - {customer.customer_name}
-                </li>
-              ))}
-            </ul>
+      </section>
+      <section>
+        {loading.product ? '' : (
+          product ? (
+            <div className="border flex flex-col gap-2">
+              <p className="font-semibold p-2">ID do Produto: {product.product_id}</p>
+              <p className="font-semibold p-2">Nome do produto: {product.product_name}</p>
+              <p className="font-semibold p-2">Quantidade: {product.quantity}</p>
+              <p className="font-semibold p-2">Preço Unitário: {product.unit_price}</p>
+              <button
+                className="bg-red-500 text-white p-2 rounded"
+                onClick={() => setProduct(null)}
+              >
+                Limpar
+              </button>
+            </div>
+          ) : (
+            errors.product && <p>{errors.product}</p>
           )
         )}
-      </form>
+      </section>
+      <section>
+          {loading.countryCustomers ? '' : (
+            countryCustomers.length > 0 ? (
+              <div>
+                <h3 className="text-center p-3 uppercase underline">Consulta de Clientes por País</h3>
+                <table className="table-auto w-full border-collapse border border-gray-200">
+                  <thead>
+                    <tr>
+                      <th className="border p-2">Nome do Cliente</th>
+                      <th className="border p-2">Cliente ID</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {countryCustomers.map((customer, index) => (
+                      <tr key={index}>
+                        <td className="border p-2">{customer.customer_name}</td>
+                        <td className="border p-2">{customer.customer_id}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <button
+                  className="bg-red-500 text-white p-2 rounded mt-4"
+                  onClick={() => setCountryCustomers([])}
+                >
+                  Limpar
+                </button>
+              </div>
+            ) : (
+              errors.countryCustomers && <p className="text-red-500">{errors.countryCustomers}</p>
+            )
+          )}
+        </section>
     </div>
+  </main>
   );
 }

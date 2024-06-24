@@ -59,8 +59,9 @@ func GetCustomers(c *gin.Context) {
 	var customers []models.Customer
 	for _, row := range rows[1:] {
 		customer := models.Customer{
-			CustomerId:   row[2],
-			CustomerName: row[3],
+			CustomerId:     row[2],
+			CustomerName:   row[3],
+			CustomerDomain: row[4],
 		}
 		customers = append(customers, customer)
 	}
@@ -122,6 +123,10 @@ func GetCustomersByCountry(c *gin.Context) {
 			}
 			customers = append(customers, customer)
 		}
+	}
+	if len(customers) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No customers found for the specified country"})
+		return
 	}
 
 	c.JSON(http.StatusOK, customers)

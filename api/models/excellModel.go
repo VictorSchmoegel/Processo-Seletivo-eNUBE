@@ -6,8 +6,9 @@ type Partner struct {
 }
 
 type Customer struct {
-	CustomerId   string `json:"customer_id"`
-	CustomerName string `json:"customer_name"`
+	CustomerId     string `json:"customer_id"`
+	CustomerName   string `json:"customer_name"`
+	CustomerDomain string `json:"customer_domain"`
 }
 
 type Invoice struct {
