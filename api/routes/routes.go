@@ -10,6 +10,10 @@ import (
 
 func HandleRequests() *gin.Engine {
 	r := gin.Default()
+	r.Static("/static", "./client/build/static")
+	r.NoRoute(func(c *gin.Context) {
+		c.File("./client/build/index.html")
+	})
 	r.POST("/createuser", controllers.CreateUser)
 	r.POST("/auth", controllers.AuthUser)
 	auth := r.Group("/")
