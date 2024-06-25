@@ -38,7 +38,7 @@ export default function Consulta() {
           navigate("/login");
         }
       } catch (error) {
-        console.error("Failed to verify authentication:", error);
+        console.error("falha ao autenticar autorização:", error);
         alert("Usuário não autorizado, faça o login");
         navigate("/login");
       }
@@ -53,49 +53,71 @@ export default function Consulta() {
 
   const fetchPartners = async () => {
     setLoading(prev => ({ ...prev, partners: true }));
-    const response = await fetch('/api/partners');
-    const data = await response.json();
-    const uniquePartners = Array.from(new Set(data.map(p => JSON.stringify(p)))).map(p => JSON.parse(p));
-    setPartners(uniquePartners);
-    setLoading(prev => ({ ...prev, partners: false }));
+    try {
+      const response = await fetch('/api/partners');
+      const data = await response.json();
+      const uniquePartners = Array.from(new Set(data.map(p => JSON.stringify(p)))).map(p => JSON.parse(p));
+      setPartners(uniquePartners);
+      setErrors(prev => ({ ...prev, partners: null }));
+    } catch (error) {
+      setErrors(prev => ({ ...prev, partners: 'Erro ao carregar parceiros' }));
+    } finally {
+      setLoading(prev => ({ ...prev, partners: false }));
+    }
   };
 
   const fetchCustomers = async () => {
     setLoading(prev => ({ ...prev, customers: true }));
-    const response = await fetch('/api/customers');
-    const data = await response.json();
-    const uniqueCustomers = Array.from(new Set(data.map(p => JSON.stringify(p)))).map(p => JSON.parse(p));
-    setCustomers(uniqueCustomers);
-    setLoading(prev => ({ ...prev, customers: false }));
+    try {
+      const response = await fetch('/api/customers');
+      const data = await response.json();
+      const uniqueCustomers = Array.from(new Set(data.map(p => JSON.stringify(p)))).map(p => JSON.parse(p));
+      setCustomers(uniqueCustomers);
+      setErrors(prev => ({ ...prev, customers: null }));
+    } catch (error) {
+      setErrors(prev => ({ ...prev, customers: 'Erro ao carregar clientes' }));
+    } finally {
+      setLoading(prev => ({ ...prev, customers: false }));
+    }
   };
 
   const fetchProduct = async () => {
     setLoading(prev => ({ ...prev, product: true }));
     setErrors(prev => ({ ...prev, product: null }));
-    const response = await fetch(`/api/products/${productId}`);
-    const data = await response.json();
-    if (response.status === 404) {
-      setErrors(prev => ({ ...prev, product: 'Produto não encontrado' }));
-      setProduct(null);
-    } else {
-      setProduct(data);
+    try {
+      const response = await fetch(`/api/products/${productId}`);
+      const data = await response.json();
+      if (response.status === 404) {
+        setErrors(prev => ({ ...prev, product: 'Produto não encontrado' }));
+        setProduct(null);
+      } else {
+        setProduct(data);
+      }
+    } catch (error) {
+      setErrors(prev => ({ ...prev, product: 'Erro ao carregar produto' }));
+    } finally {
+      setLoading(prev => ({ ...prev, product: false }));
     }
-    setLoading(prev => ({ ...prev, product: false }));
   };
 
   const fetchCountryCustomers = async () => {
     setLoading(prev => ({ ...prev, countryCustomers: true }));
     setErrors(prev => ({ ...prev, countryCustomers: null }));
-    const response = await fetch(`/api/customers/${country}`);
-    const data = await response.json();
-    const uniqueCustomers = Array.from(new Set(data.map(p => JSON.stringify(p)))).map(p => JSON.parse(p));
-    if (response.status === 404) {
-      setErrors(prev => ({ ...prev, countryCustomers: 'País não encontrado' }));
-      setCountryCustomers([]);
-    } else {
-      setCountryCustomers(uniqueCustomers);
+    try {
+      const response = await fetch(`/api/customers/${country}`);
+      const data = await response.json();
+      const uniqueCustomers = Array.from(new Set(data.map(p => JSON.stringify(p)))).map(p => JSON.parse(p));
+      if (response.status === 404) {
+        setErrors(prev => ({ ...prev, countryCustomers: 'País não encontrado' }));
+        setCountryCustomers([]);
+      } else {
+        setCountryCustomers(uniqueCustomers);
+      }
+    } catch (error) {
+      setErrors(prev => ({ ...prev, countryCustomers: 'Erro ao carregar clientes por país' }));
+    } finally {
+      setLoading(prev => ({ ...prev, countryCustomers: false }));
     }
-    setLoading(prev => ({ ...prev, countryCustomers: false }));
   };
 
   return (
@@ -105,7 +127,7 @@ export default function Consulta() {
       <form className="flex flex-col gap-4">
 
         {/* consulta de parceiros */}
-        <section className="mb-6 border max-w-lg flex justify-between">
+        <section className="border max-w-lg flex justify-between">
           <h2 className="mt-auto mb-auto p-2 text-center">Consulte Parceiros</h2>
           <button
             onClick={fetchPartners}
@@ -115,9 +137,10 @@ export default function Consulta() {
             {loading.partners ? 'Carregando...' : 'Consultar Parceiros'}
           </button>
         </section>
+        {errors.partners && <p className="text-red-500">{errors.partners}</p>}
 
         {/* consulta de clientes */}
-        <section className="mb-6 border max-w-lg flex justify-between">
+        <section className="border max-w-lg flex justify-between">
           <h2 className="mt-auto mb-auto p-2">Consulte Clientes</h2>
           <button
             onClick={fetchCustomers}
@@ -127,9 +150,10 @@ export default function Consulta() {
             {loading.customers ? 'Carregando...' : 'Consultar Clientes'}
           </button>
         </section>
+        {errors.customers && <p className="text-red-500">{errors.customers}</p>}
 
         {/* consulta de produtos */}
-        <section className="mb-6 border max-w-lg flex justify-between">
+        <section className="border max-w-lg flex justify-between">
           <input
             type="text"
             placeholder="Nome ou ID do Produto"
@@ -145,9 +169,10 @@ export default function Consulta() {
             {loading.product ? 'Carregando...' : 'Consultar Produto'}
           </button>
         </section>
+        {errors.product && <p className="text-red-500">{errors.product}</p>}
 
         {/* consulta de clientes por país */}
-        <section className="mb-6 border max-w-lg flex justify-between">
+        <section className="border max-w-lg flex justify-between">
           <input
             type="text"
             placeholder="País"
@@ -163,6 +188,7 @@ export default function Consulta() {
             {loading.countryCustomers ? 'Carregando...' : 'Consultar Clientes por País'}
           </button>
         </section>
+        {errors.countryCustomers && <p className="text-red-500">{errors.countryCustomers}</p>}
       </form>
     </div>
 

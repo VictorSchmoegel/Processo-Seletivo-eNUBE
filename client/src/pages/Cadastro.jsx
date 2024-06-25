@@ -7,31 +7,36 @@ export default function Cadastro() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setLoading(true)
+    setError(false)
 
-    const response = await fetch('/api/createuser', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, password }),
-    });
-
-    if (response.ok) {
-      setError(false)
-      const data = await response.json()
-      console.log(data)
-      navigate('/')
-    } else {
-      const data = await response.json()
-      setError(data.error)
-      console.log('Erro ao criar usuario', data.error)
-    }
-      
+    try {
+      const response = await fetch('/api/createuser', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+      if (response.ok) {
+        const data = await response.json()
+        console.log(data)
+        navigate('/')
+      } else {
+        const errorData = await response.json()
+        setError(errorData.message || 'Usuário já cadastrado')
+      }
+    } catch (error) {
+      setError('Erro ao fazer login')
+    } finally {
+      setLoading(false)
+    } 
   }
 
   return (
@@ -59,10 +64,10 @@ export default function Cadastro() {
             className='bg-sky-900 text-white p-3 rounded-lg'
             type='submit'
           >
-            Cadastrar
+            {loading ? 'Carregando...' : 'Cadastrar'}
           </button>
         </form>
-        {error && <p className='text-red-500'>Não foi possível cadastrar o usuário</p>}
+        {error && <p className='text-red-500'>{error}</p>}
       </div>
     </main>
   )

@@ -29,7 +29,7 @@ func CreateUser(c *gin.Context) {
 	}
 
 	if existingUser.UserName != "" {
-		c.JSON(400, gin.H{"error": "Username already exists"})
+		c.JSON(400, gin.H{"error": "Usuário já cadastrado"})
 		return
 	}
 
@@ -42,11 +42,11 @@ func CreateUser(c *gin.Context) {
 
 	_, err = collection.InsertOne(c, user)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		c.JSON(500, gin.H{"error": "Erro ao criar usuário"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "User created successfully"})
+	c.JSON(http.StatusCreated, gin.H{"message": "Usuário criado com sucesso"})
 }
 
 func AuthUser(c *gin.Context) {
@@ -65,7 +65,7 @@ func AuthUser(c *gin.Context) {
 	err := collection.FindOne(c, bson.M{"username": credentials.UserName}).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário ou senha inválidos"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -73,18 +73,18 @@ func AuthUser(c *gin.Context) {
 	}
 
 	if !utils.CheckPasswordHash(credentials.Password, user.Password) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Usuário ou senha inválidos"})
 		return
 	}
 
 	token, err := utils.GenerateJWT(user.ID.Hex())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao gerar token de autenticação"})
 		return
 	}
 
 	c.SetCookie("access_token", token, 3600*24, "/", "localhost", false, true)
-	c.JSON(http.StatusOK, gin.H{"message": "Authenticated successfully", "token": token})
+	c.JSON(http.StatusOK, gin.H{"message": "Atenticado com sucesso", "token": token})
 }
 
 func CheckAuth(c *gin.Context) {
