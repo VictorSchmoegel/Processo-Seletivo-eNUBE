@@ -27,9 +27,8 @@ SECRET_KEY='sahdfuiashdiaskljfujah'
 
 ### 3. Instale as dependências
 
-Navegue até a pasta api e instale as dependências do Go:
+Na raiz do projeto, instale as dependências do Go:
 ```bash
-cd api
 go mod tidy
 ```
 Navegue até a pasta client e instale as dependências do Node.js:
