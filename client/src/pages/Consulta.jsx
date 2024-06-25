@@ -1,4 +1,5 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 
 export default function Consulta() {
   const [partners, setPartners] = useState([])
@@ -7,6 +8,8 @@ export default function Consulta() {
   const [country, setCountry] = useState('')
   const [productId, setProductId] = useState('');
   const [countryCustomers, setCountryCustomers] = useState([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState({
     partners: false,
     customers: false,
@@ -19,6 +22,34 @@ export default function Consulta() {
     product: null,
     countryCustomers: null
   });
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch("/checkauth", {
+          method: "GET",
+          credentials: "include"
+        });
+
+        if (response.ok) {
+          setIsAuthenticated(true);
+        } else {
+          alert("Usuário não autorizado, faça o login");
+          navigate("/login");
+        }
+      } catch (error) {
+        console.error("Failed to verify authentication:", error);
+        alert("Usuário não autorizado, faça o login");
+        navigate("/login");
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
+
+  if (!isAuthenticated) {
+    return <div>Loading...</div>;
+  }
 
   const fetchPartners = async () => {
     setLoading(prev => ({ ...prev, partners: true }));
