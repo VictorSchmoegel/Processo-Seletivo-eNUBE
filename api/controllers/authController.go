@@ -40,17 +40,20 @@ func CreateUser(c *gin.Context) {
 	}
 	user.Password = hashedPassword
 
-	result, err := collection.InsertOne(c, user)
+	_, err = collection.InsertOne(c, user)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "User created successfully", "id": result.InsertedID})
+	c.JSON(http.StatusCreated, gin.H{"message": "User created successfully"})
 }
 
 func AuthUser(c *gin.Context) {
-	var credentials models.User
+	var credentials struct {
+		UserName string `json:"username" validate:"required"`
+		Password string `json:"password" validate:"required"`
+	}
 
 	if err := c.ShouldBindJSON(&credentials); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -74,12 +77,16 @@ func AuthUser(c *gin.Context) {
 		return
 	}
 
-	token, err := utils.GenerateJWT(user.UserName)
+	token, err := utils.GenerateJWT(user.ID.Hex())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}
 
-	c.SetCookie("token", token, 3600*24, "/", "localhost", false, true)
+	c.SetCookie("access_token", token, 3600*24, "/", "localhost", false, true)
 	c.JSON(http.StatusOK, gin.H{"message": "Authenticated successfully", "token": token})
+}
+
+func CheckAuth(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"message": "User is authenticated"})
 }
